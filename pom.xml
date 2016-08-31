@@ -12,12 +12,47 @@
 	<name>OLE Bootstrapper</name>
 	<url>https://github.com/rmrschub/OLE-Bootstrapper</url>
  
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  	<properties>
+  		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  		<graphStore>fuseki</graphStore>
+    	<dataEndpoint>http://localhost:3030/ART/data</dataEndpoint>
+    	<queryEndpoint>http://localhost:3030/ART/sparql</queryEndpoint>
+        <baseURI>http://localhost:8080</baseURI>
+        <partsDirectory>/Users/resc01/Desktop/ldraw/ldraw/parts</partsDirectory>
 	</properties>
 
 	<build>
+		<finalName>OLE-Bootstrapper</finalName>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>license-maven-plugin</artifactId>
+					<version>1.9</version>
+					<configuration>
+						<outputDirectory>${basedir}</outputDirectory>
+						<thirdPartyFilename>THIRD-PARTY</thirdPartyFilename>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
+		    <plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+		        <artifactId>properties-maven-plugin</artifactId>
+		        <version>1.0.0</version>
+		        <executions>
+		            <execution>
+		                <phase>generate-resources</phase>
+		                <goals>
+		                    <goal>write-project-properties</goal>
+		                </goals>
+		                <configuration>
+		                    <outputFile>${project.build.outputDirectory}/bootstrap.properties</outputFile>
+		                </configuration>
+		            </execution>
+		        </executions>
+		    </plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
@@ -25,6 +60,10 @@
 				<configuration>
 					<mainClass>de.dfki.resc28.ole.bootstrap.App</mainClass>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
@@ -40,6 +79,11 @@
  	</reporting>
 
   	<dependencies>
+		<dependency>
+		    <groupId>org.codehaus.mojo</groupId>
+		    <artifactId>properties-maven-plugin</artifactId>
+		    <version>1.0.0</version>
+		</dependency>
  		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-core</artifactId>

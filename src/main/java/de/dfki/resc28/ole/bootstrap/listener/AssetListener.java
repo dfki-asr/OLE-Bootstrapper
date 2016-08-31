@@ -41,6 +41,7 @@ import de.dfki.resc28.LDrawParser.LDrawParser.Reference_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.TitleContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
+import de.dfki.resc28.ole.bootstrap.App;
 import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
@@ -84,11 +85,11 @@ public class AssetListener extends LDrawParserBaseListener
 		assetModel.setNsPrefix("skos", SKOS.getURI());
 		assetModel.setNsPrefix("xsd", XSD.NS);
 		assetModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		assetModel.setNsPrefix("users", "http://ole.dfki.de/repo/users/");
-		assetModel.setNsPrefix("assets", "http://ole.dfki.de/repo/assets/");
-		assetModel.setNsPrefix("distributions", "http://ole.dfki.de/repo/distributions/");
+		assetModel.setNsPrefix("users", App.fBaseURI + "repo/users/");
+		assetModel.setNsPrefix("assets", App.fBaseURI + "repo/assets/");
+		assetModel.setNsPrefix("distributions", App.fBaseURI + "repo/distributions/");
 		
-		asset = assetModel.createResource("http://ole.dfki.de/repo/assets/" + basename);
+		asset = assetModel.createResource(App.fBaseURI + "repo/assets/" + basename);
 		assetModel.add( asset, RDF.type, ADMS.Asset );
 		
 		landingPage = assetModel.createResource(asset.getURI() + ".html" );
@@ -127,7 +128,7 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = assetModel.createResource("http://ole.dfki.de/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource creator = assetModel.createResource(App.fBaseURI + "repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
 				assetModel.add( creator, RDF.type, FOAF.Agent );		
 				assetModel.add( creator, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
 				assetModel.add( creator, FOAF.made, asset);	
@@ -173,7 +174,7 @@ public class AssetListener extends LDrawParserBaseListener
 			
 			if (ctx.realname() != null)
 			{
-				Resource contributor = assetModel.createResource("http://ole.dfki.de/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource contributor = assetModel.createResource(App.fBaseURI + "repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
 				assetModel.add( contributor, RDF.type, FOAF.Agent );
 				assetModel.add( contributor, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
 				assetModel.add( changeNote,  DCTerms.creator, contributor);
@@ -211,7 +212,7 @@ public class AssetListener extends LDrawParserBaseListener
 	{			  
 		if (ctx != null)
 		{
-			Resource distribution = assetModel.createResource("http://ole.dfki.de/repo/distributions/" + ctx.FILENAME().getText());
+			Resource distribution = assetModel.createResource(App.fBaseURI + "repo/distributions/" + ctx.FILENAME().getText());
 			assetModel.add( asset, DCAT.distribution, distribution );
 		}
 	}
@@ -221,13 +222,13 @@ public class AssetListener extends LDrawParserBaseListener
 	{
 		if (ctx.subPart() != null)
 		{
-			Resource subPart = assetModel.createResource("http://ole.dfki.de/repo/assets/" + FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText()));
+			Resource subPart = assetModel.createResource(App.fBaseURI + "repo/assets/" + FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText()));
 			assetModel.add( asset, ADMS.includedAsset, subPart );
 		}
 		
 		if (ctx.hiResPrimitive() != null)
 		{
-			Resource hisResPrimitive = assetModel.createResource("http://ole.dfki.de/repo/assets/" + FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText()));
+			Resource hisResPrimitive = assetModel.createResource(App.fBaseURI + "repo/assets/" + FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText()));
 			assetModel.add( asset, ADMS.includedAsset, hisResPrimitive );
 		}
 	}

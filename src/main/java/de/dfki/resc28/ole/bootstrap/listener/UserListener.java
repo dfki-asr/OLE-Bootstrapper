@@ -30,6 +30,7 @@ import de.dfki.resc28.LDrawParser.LDrawParser.FileContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.History_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
+import de.dfki.resc28.ole.bootstrap.App;
 import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
@@ -39,7 +40,7 @@ public class UserListener extends LDrawParserBaseListener
 	private Resource asset;
 	private Model userModel;
 	private Resource user;
-	private String userBaseUri = "http://ole.dfki.de/repo/users/" ;
+	private String userBaseUri = App.fBaseURI + "repo/users/" ;
 	
 	private String basename;
 	private String extension;
@@ -67,11 +68,11 @@ public class UserListener extends LDrawParserBaseListener
 		userModel.setNsPrefix("skos", SKOS.getURI());
 		userModel.setNsPrefix("xsd", XSD.NS);
 		userModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		userModel.setNsPrefix("users", "http://ole.dfki.de/repo/users/");
-		userModel.setNsPrefix("assets", "http://ole.dfki.de/repo/assets/");
-		userModel.setNsPrefix("distributions", "http://ole.dfki.de/repo/distributions/");
+		userModel.setNsPrefix("users", App.fBaseURI + "repo/users/");
+		userModel.setNsPrefix("assets", App.fBaseURI + "repo/assets/");
+		userModel.setNsPrefix("distributions", App.fBaseURI + "repo/distributions/");
 		
-		asset = userModel.createResource("http://ole.dfki.de/repo/assets/" + basename);
+		asset = userModel.createResource(App.fBaseURI + "repo/assets/" + basename);
 	};
 	
 	@Override

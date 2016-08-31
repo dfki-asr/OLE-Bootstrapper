@@ -13,6 +13,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
+import java.util.Properties;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -38,31 +39,68 @@ import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
 
-// TODO: make Fuseki endpoint configurable
-// TODO: make LDraw parts directory configurable
 // TODO: rethink dataset layout!
+
 public class App 
 {
+	public static String fBaseURI = null;
+	public static String fPartsDirectory = null;
+	public static IGraphStore fGraphStore = null;
+
+
+	public static synchronized void configure()
+	{
+		try 
+		{
+            String configFile = System.getProperty("bootstrap.configuration");
+            java.io.InputStream is;
+            
+            if (configFile != null) 
+            {
+                is = new java.io.FileInputStream(configFile);
+                System.out.format("Loading OLE Bootstrapper configuration from %s ...%n", configFile);
+            } 
+            else 
+            {
+                is = App.class.getClassLoader().getResourceAsStream("bootstrap.properties");
+                System.out.println("Loading OLE Bootstrapper configuration from internal resource file ...");
+            }
+            
+            java.util.Properties p = new Properties();
+            p.load(is);
+
+            fBaseURI = p.getProperty("baseURI");
+            fPartsDirectory = p.getProperty("partsDirectory");
+                       
+            String storage = p.getProperty("graphStore");
+            if (storage.equals("fuseki")) 
+            {
+                String dataEndpoint = p.getProperty("dataEndpoint");
+                String queryEndpoint = p.getProperty("queryEndpoint");
+                System.out.format("Use Fuseki backend: dataEndpoint=%s queryEndpoint=%s ...%n", dataEndpoint, queryEndpoint);
+
+                fGraphStore = new FusekiGraphStore(dataEndpoint, queryEndpoint);
+            }
+            
+            
+		}
+        catch (Exception e) 
+		{
+            e.printStackTrace();
+        }
+	}
+	
+	
+	
+	
 	public static void main( String[] args ) throws IOException
 	{
-//		InputStream fi = new FileInputStream("/Users/resc01/Desktop/ldraw/ldraw/parts/003238a.dat");
-//		LDrawLexer lex = new LDrawLexer(new ANTLRInputStream(fi));
-//		CommonTokenStream t = new CommonTokenStream(lex);
-//		
-//		t.fill();
-//		
-//		for (Token i : t.getTokens())
-//			System.out.println(LDrawLexer.VOCABULARY.getSymbolicName(i.getType()) + ": " + i.getText());
+		configure();
 		
-		String dataEndpoint = "http://localhost:3030/ole/data";
-		String queryEndpoint = "http://localhost:3030/ole/sparql";
-		IGraphStore fGraphStore = new FusekiGraphStore(dataEndpoint, queryEndpoint);
-		
-//		IGraphStore fGraphStore = new TDBGraphStore("/Users/resc01/Desktop/ldraw_tdb");
 
-		String partsDirectory = "/Users/resc01/Desktop/ldraw/ldraw/parts";
+//		String partsDirectory = "/Users/resc01/Desktop/ldraw/ldraw/parts";
 		
-		File[] files = new File(partsDirectory).listFiles(new FilenameFilter() {
+		File[] files = new File(fPartsDirectory).listFiles(new FilenameFilter() {
 		    public boolean accept(File dir, String name) {
 		        return name.toLowerCase().endsWith(".dat");
 		    }
@@ -79,12 +117,12 @@ public class App
 		repoModel.setNsPrefix("skos", SKOS.getURI());
 		repoModel.setNsPrefix("xsd", XSD.NS);
 		repoModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		repoModel.setNsPrefix("repo", "http://ole.dfki.de/repo/");
-		repoModel.setNsPrefix("users", "http://ole.dfki.de/repo/users/");
-		repoModel.setNsPrefix("assets", "http://ole.dfki.de/repo/assets/");
-		repoModel.setNsPrefix("distributions", "http://ole.dfki.de/repo/distributions/");
+		repoModel.setNsPrefix("repo", fBaseURI + "repo/");
+		repoModel.setNsPrefix("users", fBaseURI + "repo/users/");
+		repoModel.setNsPrefix("assets", fBaseURI + "repo/assets/");
+		repoModel.setNsPrefix("distributions", fBaseURI + "repo/distributions/");
 		
-		Resource repo = repoModel.createResource("http://ole.dfki.de/repo");
+		Resource repo = repoModel.createResource(fBaseURI + "repo");
 		repoModel.add( repo, RDF.type, ADMS.AssetRepository );
 		repoModel.add( repo, DCTerms.title, "The Open Lego Parts Repository" );
 		repoModel.add( repo, DCTerms.created, repoModel.createTypedLiteral(Calendar.getInstance().getTime(),XSDDatatype.XSDdate));
@@ -125,7 +163,7 @@ public class App
 				
 				
 				// add asset to repo
-				Resource asset = repoModel.createResource("http://ole.dfki.de/repo/assets/" + FilenameUtils.getBaseName(file.getName()));
+				Resource asset = repoModel.createResource(fBaseURI + "repo/assets/" + FilenameUtils.getBaseName(file.getName()));
 				repoModel.add( repo, DCAT.dataset, asset );
 			
 				// close InputStream

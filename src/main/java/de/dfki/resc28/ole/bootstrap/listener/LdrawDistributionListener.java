@@ -28,6 +28,7 @@ import de.dfki.resc28.LDrawParser.LDrawParser.FileContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.Name_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
+import de.dfki.resc28.ole.bootstrap.App;
 import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
@@ -38,7 +39,7 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 	private Resource distribution;
 	private Resource asset;
 	
-	private String distibutionBaseUri = "http://ole.dfki.de/repo/distributions/" ;
+	private String distibutionBaseUri = App.fBaseURI + "repo/distributions/" ;
 	
 	private String basename;
 	private String extension;
@@ -70,11 +71,11 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		distributionModel.setNsPrefix("skos", SKOS.getURI());
 		distributionModel.setNsPrefix("xsd", XSD.NS);
 		distributionModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		distributionModel.setNsPrefix("users", "http://ole.dfki.de/repo/users/");
-		distributionModel.setNsPrefix("assets", "http://ole.dfki.de/repo/assets/");
-		distributionModel.setNsPrefix("distributions", "http://ole.dfki.de/repo/distributions/");
+		distributionModel.setNsPrefix("users", App.fBaseURI + "repo/users/");
+		distributionModel.setNsPrefix("assets", App.fBaseURI + "repo/assets/");
+		distributionModel.setNsPrefix("distributions", App.fBaseURI + "repo/distributions/");
 		
-		asset = distributionModel.createResource("http://ole.dfki.de/repo/assets/" + basename);	
+		asset = distributionModel.createResource(App.fBaseURI + "repo/assets/" + basename);	
 				
 		distribution = distributionModel.createResource(distibutionBaseUri + fileName);
 	};
@@ -106,7 +107,7 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = distributionModel.createResource("http://ole.dfki.de/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource creator = distributionModel.createResource(App.fBaseURI + "repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
 				distributionModel.add( distribution, FOAF.maker, creator );
 				distributionModel.add( distribution,  DCTerms.creator, creator );
 			}
