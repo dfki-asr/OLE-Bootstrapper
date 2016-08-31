@@ -40,12 +40,12 @@ public class UserListener extends LDrawParserBaseListener
 	private Resource asset;
 	private Model userModel;
 	private Resource user;
-	private String userBaseUri = App.fBaseURI + "repo/users/" ;
-	
+	private String userBaseUri = App.fBaseURI + "/repo/users/" ;
+
 	private String basename;
 	private String extension;
 	private IGraphStore graphStore;
-	
+
 	public UserListener(String fileName, IGraphStore graphStore)
 	{
 		super();
@@ -68,15 +68,15 @@ public class UserListener extends LDrawParserBaseListener
 		userModel.setNsPrefix("skos", SKOS.getURI());
 		userModel.setNsPrefix("xsd", XSD.NS);
 		userModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		userModel.setNsPrefix("users", App.fBaseURI + "repo/users/");
-		userModel.setNsPrefix("assets", App.fBaseURI + "repo/assets/");
-		userModel.setNsPrefix("distributions", App.fBaseURI + "repo/distributions/");
-		
-		asset = userModel.createResource(App.fBaseURI + "repo/assets/" + basename);
+		userModel.setNsPrefix("users", App.fBaseURI + "/repo/users/");
+		userModel.setNsPrefix("assets", App.fBaseURI + "/repo/assets/");
+		userModel.setNsPrefix("distributions", App.fBaseURI + "/repo/distributions/");
+
+		asset = userModel.createResource(App.fBaseURI + "/repo/assets/" + basename);
 	};
-	
+
 	@Override
-	public void exitFile(FileContext ctx) 
+	public void exitFile(FileContext ctx)
 	{
 		if (user != null)
 		{
