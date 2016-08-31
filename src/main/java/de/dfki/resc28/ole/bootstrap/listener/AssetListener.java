@@ -85,16 +85,16 @@ public class AssetListener extends LDrawParserBaseListener
 		assetModel.setNsPrefix("skos", SKOS.getURI());
 		assetModel.setNsPrefix("xsd", XSD.NS);
 		assetModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		assetModel.setNsPrefix("users", App.fBaseURI + "repo/users/");
-		assetModel.setNsPrefix("assets", App.fBaseURI + "repo/assets/");
-		assetModel.setNsPrefix("distributions", App.fBaseURI + "repo/distributions/");
-		
-		asset = assetModel.createResource(App.fBaseURI + "repo/assets/" + basename);
+		assetModel.setNsPrefix("users", App.fBaseURI + "/repo/users/");
+		assetModel.setNsPrefix("assets", App.fBaseURI + "/repo/assets/");
+		assetModel.setNsPrefix("distributions", App.fBaseURI + "/repo/distributions/");
+
+		asset = assetModel.createResource(App.fBaseURI + "/repo/assets/" + basename);
 		assetModel.add( asset, RDF.type, ADMS.Asset );
-		
+
 		landingPage = assetModel.createResource(asset.getURI() + ".html" );
 		assetModel.add(landingPage, RDF.type, FOAF.Document);
-		assetModel.add( asset, DCAT.landingPage, landingPage);		
+		assetModel.add( asset, DCAT.landingPage, landingPage);
 	};
 	
 	@Override
@@ -128,14 +128,14 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = assetModel.createResource(App.fBaseURI + "repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
-				assetModel.add( creator, RDF.type, FOAF.Agent );		
+				Resource creator = assetModel.createResource(App.fBaseURI + "/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				assetModel.add( creator, RDF.type, FOAF.Agent );
 				assetModel.add( creator, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
-				assetModel.add( creator, FOAF.made, asset);	
-				
+				assetModel.add( creator, FOAF.made, asset);
+
 				assetModel.add( asset, FOAF.maker, creator );
 				assetModel.add( asset,  DCTerms.creator, creator );
-				
+
 				if (ctx.username() != null)
 				{
 					Resource account = assetModel.createResource();
@@ -174,7 +174,7 @@ public class AssetListener extends LDrawParserBaseListener
 			
 			if (ctx.realname() != null)
 			{
-				Resource contributor = assetModel.createResource(App.fBaseURI + "repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource contributor = assetModel.createResource(App.fBaseURI + "/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
 				assetModel.add( contributor, RDF.type, FOAF.Agent );
 				assetModel.add( contributor, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
 				assetModel.add( changeNote,  DCTerms.creator, contributor);
@@ -212,27 +212,27 @@ public class AssetListener extends LDrawParserBaseListener
 	{			  
 		if (ctx != null)
 		{
-			Resource distribution = assetModel.createResource(App.fBaseURI + "repo/distributions/" + ctx.FILENAME().getText());
+			Resource distribution = assetModel.createResource(App.fBaseURI + "/repo/distributions/" + ctx.FILENAME().getText());
 			assetModel.add( asset, DCAT.distribution, distribution );
 		}
 	}
-	
+
 	@Override
 	public void exitReference_row(Reference_rowContext ctx)
 	{
 		if (ctx.subPart() != null)
 		{
-			Resource subPart = assetModel.createResource(App.fBaseURI + "repo/assets/" + FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText()));
+			Resource subPart = assetModel.createResource(App.fBaseURI + "/repo/assets/" + FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText()));
 			assetModel.add( asset, ADMS.includedAsset, subPart );
 		}
-		
+
 		if (ctx.hiResPrimitive() != null)
 		{
-			Resource hisResPrimitive = assetModel.createResource(App.fBaseURI + "repo/assets/" + FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText()));
+			Resource hisResPrimitive = assetModel.createResource(App.fBaseURI + "/repo/assets/" + FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText()));
 			assetModel.add( asset, ADMS.includedAsset, hisResPrimitive );
 		}
 	}
-	
+
 	public void exitHelp_row(Help_rowContext ctx)
 	{
 		if (ctx.free_text() != null)
