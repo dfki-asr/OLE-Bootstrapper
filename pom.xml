@@ -15,9 +15,9 @@
   	<properties>
   		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   		<graphStore>fuseki</graphStore>
-    	<dataEndpoint>http://localhost:3030/ART/data</dataEndpoint>
-    	<queryEndpoint>http://localhost:3030/ART/sparql</queryEndpoint>
-        <baseURI>http://localhost:8080</baseURI>
+    	<dataEndpoint>http://localhost:3030/ole/data</dataEndpoint>
+    	<queryEndpoint>http://localhost:3030/ole/sparql</queryEndpoint>
+        <baseURI>http://localhost:8080/</baseURI>
         <partsDirectory>/Users/resc01/Desktop/ldraw/ldraw/parts</partsDirectory>
 	</properties>
 
