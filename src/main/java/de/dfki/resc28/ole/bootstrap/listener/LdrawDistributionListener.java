@@ -38,9 +38,9 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 	private Model distributionModel;
 	private Resource distribution;
 	private Resource asset;
-	
-	private String distibutionBaseUri = App.fBaseURI + "repo/distributions/" ;
-	
+
+	private String distibutionBaseUri = App.fBaseURI + "/repo/distributions/" ;
+
 	private String basename;
 	private String extension;
 	private String fileName;
@@ -71,17 +71,17 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		distributionModel.setNsPrefix("skos", SKOS.getURI());
 		distributionModel.setNsPrefix("xsd", XSD.NS);
 		distributionModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		distributionModel.setNsPrefix("users", App.fBaseURI + "repo/users/");
-		distributionModel.setNsPrefix("assets", App.fBaseURI + "repo/assets/");
-		distributionModel.setNsPrefix("distributions", App.fBaseURI + "repo/distributions/");
-		
-		asset = distributionModel.createResource(App.fBaseURI + "repo/assets/" + basename);	
-				
+		distributionModel.setNsPrefix("users", App.fBaseURI + "/repo/users/");
+		distributionModel.setNsPrefix("assets", App.fBaseURI + "/repo/assets/");
+		distributionModel.setNsPrefix("distributions", App.fBaseURI + "/repo/distributions/");
+
+		asset = distributionModel.createResource(App.fBaseURI + "/repo/assets/" + basename);
+
 		distribution = distributionModel.createResource(distibutionBaseUri + fileName);
 	};
-	
+
 	@Override
-	public void exitFile(FileContext ctx) 
+	public void exitFile(FileContext ctx)
 	{
 		if (distribution != null)
 		{
@@ -107,7 +107,7 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = distributionModel.createResource(App.fBaseURI + "repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource creator = distributionModel.createResource(App.fBaseURI + "/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
 				distributionModel.add( distribution, FOAF.maker, creator );
 				distributionModel.add( distribution,  DCTerms.creator, creator );
 			}
