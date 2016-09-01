@@ -40,9 +40,6 @@ import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
 
 // TODO: rethink dataset layout!
-public class App {
-
-<<<<<<< HEAD
 public class App 
 {
 	public static String fBaseURI = null;
@@ -50,20 +47,33 @@ public class App
 	public static IGraphStore fGraphStore = null;
 	public static Model fRepoModel = null;
 	public static Resource fRepo = null;
-=======
-    public static String fBaseURI = null;
-    public static String fPartsDirectory = null;
-    public static IGraphStore fGraphStore = null;
->>>>>>> c8989f49ff68e4abe091091b5cf202272dc0120e
 
-    public static String getProperty(java.util.Properties p, String key, String sysKey) {
-        String value = System.getProperty(sysKey);
-        if (value != null)
-            return value;
-        return p.getProperty(key);
-    }
+	
+	public static void main( String[] args ) throws IOException
+	{
+		configure();
+		initRepoModel();
 
-    public static synchronized void configure() {
+//		parseFile(new File("/Users/resc01/Desktop/ldraw/ldraw/parts/995.dat"));		
+		
+		File[] files = new File(fPartsDirectory).listFiles(new FilenameFilter() {
+		    public boolean accept(File dir, String name) {
+		        return name.toLowerCase().endsWith(".dat");
+		    }
+		});
+		
+		for (File file : files) 
+			parseFile(file);
+		
+		fGraphStore.addToNamedGraph(fRepo.getURI(), fRepoModel);
+
+		System.exit(0);
+	}
+	
+
+
+    public static synchronized void configure() 
+    {
         try {
             String configFile = System.getProperty("bootstrap.configuration");
             java.io.InputStream is;
@@ -107,34 +117,8 @@ public class App
         } catch (Exception e) {
             e.printStackTrace();
         }
-<<<<<<< HEAD
 	}
-	
-	
-	
-	
-	public static void main( String[] args ) throws IOException
-	{
-		configure();
-		initRepoModel();
 
-//		parseFile(new File("/Users/resc01/Desktop/ldraw/ldraw/parts/995.dat"));		
-		
-		File[] files = new File(fPartsDirectory).listFiles(new FilenameFilter() {
-		    public boolean accept(File dir, String name) {
-		        return name.toLowerCase().endsWith(".dat");
-		    }
-		});
-		
-		for (File file : files) 
-			parseFile(file);
-		
-		fGraphStore.addToNamedGraph(fRepo.getURI(), fRepoModel);
-
-		System.exit(0);
-	}
-	
-	
 	
 	
 	private static void initRepoModel()
@@ -201,97 +185,11 @@ public class App
 			fis.close();			
 		}
 	}
-=======
+
+    public static String getProperty(java.util.Properties p, String key, String sysKey) {
+        String value = System.getProperty(sysKey);
+        if (value != null)
+            return value;
+        return p.getProperty(key);
     }
-
-    public static void main(String[] args) throws IOException {
-        configure();
-
-//		String partsDirectory = "/Users/resc01/Desktop/ldraw/ldraw/parts";
-        File[] files = new File(fPartsDirectory).listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(".dat");
-            }
-        });
-
-        if (files == null) {
-            System.err.format("Error: %s is not a directory%n", fPartsDirectory);
-            System.exit(1);
-        }
-
-        Model repoModel = ModelFactory.createDefaultModel();
-        repoModel.setNsPrefixes(FOAF.NAMESPACE);
-        repoModel.setNsPrefixes(ADMS.NAMESPACE);
-        repoModel.setNsPrefixes(DCAT.NAMESPACE);
-        repoModel.setNsPrefix("dcterms", DCTerms.NS);
-        repoModel.setNsPrefix("rdf", RDF.getURI());
-        repoModel.setNsPrefix("rdfs", RDFS.getURI());
-        repoModel.setNsPrefix("skos", SKOS.getURI());
-        repoModel.setNsPrefix("xsd", XSD.NS);
-        repoModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-        repoModel.setNsPrefix("repo", fBaseURI + "/repo/");
-        repoModel.setNsPrefix("users", fBaseURI + "/repo/users/");
-        repoModel.setNsPrefix("assets", fBaseURI + "/repo/assets/");
-        repoModel.setNsPrefix("distributions", fBaseURI + "/repo/distributions/");
-
-        Resource repo = repoModel.createResource(fBaseURI + "/repo");
-        repoModel.add(repo, RDF.type, ADMS.AssetRepository);
-        repoModel.add(repo, DCTerms.title, "The Open Lego Parts Repository");
-        repoModel.add(repo, DCTerms.created, repoModel.createTypedLiteral(Calendar.getInstance().getTime(), XSDDatatype.XSDdate));
-        repoModel.add(repo, DCTerms.description, "A complete catalog of LDraw parts");
-        repoModel.add(repo, DCTerms.publisher, "resc28");
-
-        int fileCounter = 0;
-
-        for (File file : files) {
-
-            if (file.isFile()) {
-
-                System.out.format("Parsing file: %s [%d/%d]...%n", file.getAbsolutePath(), fileCounter+1, files.length);
-
-                // parse the .DAT file and create RDF models for asset and its .DAT distribution
-                InputStream fis = new FileInputStream(file);
-                LDrawLexer lexer = new LDrawLexer(new ANTLRInputStream(fis));
-                LDrawParser parser = new LDrawParser(new CommonTokenStream(lexer));
-                ParseTreeWalker walker = new ParseTreeWalker();
-                ParseTree tree = parser.file();
-
-                System.out.format("Create asset ...%n");
-                // create asset
-                walker.walk(new AssetListener(file.getName(), fGraphStore), tree);
-
-//				// create users
-//				walker.walk(new UserListener(file.getName(), fGraphStore), tree);
-                // create create ldraw-distribution
-
-                System.out.format("Create ldraw-distribution ...%n");
-                walker.walk(new LdrawDistributionListener(file.getName(), fGraphStore), tree);
-
-				// create ARVIDA distribution
-                // add asset to repo
-                System.out.format("Add asset to repo ...%n");
-                Resource asset = repoModel.createResource(fBaseURI + "/repo/assets/" + FilenameUtils.getBaseName(file.getName()));
-                repoModel.add(repo, DCAT.dataset, asset);
-
-                // close InputStream
-                fis.close();
-                fileCounter++;
-
-                System.out.format("Done%n");
-
-                //if (fileCounter == 100) {
-                //    break;
-                //}
-            }
-        }
-
-        // put repo model to graphStore
-//		fGraphStore.addToDefaultGraph(repoModel);
-        fGraphStore.addToNamedGraph(repo.getURI(), repoModel);
-
-        System.out.println("Parsed assets: " + fileCounter);
-        System.exit(0);
-    }
-
->>>>>>> c8989f49ff68e4abe091091b5cf202272dc0120e
 }
