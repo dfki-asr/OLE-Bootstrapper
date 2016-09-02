@@ -29,6 +29,7 @@ import de.dfki.resc28.LDrawParser.LDrawParser.Name_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
 import de.dfki.resc28.ole.bootstrap.App;
+import de.dfki.resc28.ole.bootstrap.Util;
 import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
@@ -39,7 +40,7 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 	private Resource distribution;
 	private Resource asset;
 
-	private String distibutionBaseUri = App.fBaseURI + "/repo/distributions/" ;
+	private String distibutionBaseUri = Util.joinPath(App.fBaseURI, "repo/distributions/") ;
 
 	private String basename;
 	private String extension;
@@ -71,13 +72,13 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		distributionModel.setNsPrefix("skos", SKOS.getURI());
 		distributionModel.setNsPrefix("xsd", XSD.NS);
 		distributionModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		distributionModel.setNsPrefix("users", App.fBaseURI + "/repo/users/");
-		distributionModel.setNsPrefix("assets", App.fBaseURI + "/repo/assets/");
-		distributionModel.setNsPrefix("distributions", App.fBaseURI + "/repo/distributions/");
+		distributionModel.setNsPrefix("users", Util.joinPath(App.fBaseURI, "repo/users/"));
+		distributionModel.setNsPrefix("assets", Util.joinPath(App.fBaseURI, "repo/assets/"));
+		distributionModel.setNsPrefix("distributions", Util.joinPath(App.fBaseURI, "repo/distributions/"));
 
-		asset = distributionModel.createResource(App.fBaseURI + "/repo/assets/" + basename);
+		asset = distributionModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets/") + Util.urlEncoded(basename));
 
-		distribution = distributionModel.createResource(distibutionBaseUri + fileName);
+		distribution = distributionModel.createResource(Util.joinPath(distibutionBaseUri, Util.urlEncoded(fileName)));
 	};
 
 	@Override
@@ -107,7 +108,7 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = distributionModel.createResource(App.fBaseURI + "/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource creator = distributionModel.createResource(Util.joinPath(App.fBaseURI, "repo/users/") + Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_"));
 				distributionModel.add( distribution, FOAF.maker, creator );
 				distributionModel.add( distribution,  DCTerms.creator, creator );
 			}
@@ -118,10 +119,10 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 	public void exitName_row(Name_rowContext ctx)
 	{			  
 		if (ctx != null)
-		{	
-			String downloadURL = "http://www.ldraw.org/library/official/parts/" + ctx.FILENAME().getText();
-			String accessURL = "http://www.ldraw.org/cgi-bin/ptdetail.cgi?f=parts/" + ctx.FILENAME().getText();
-			
+		{
+			String downloadURL = "http://www.ldraw.org/library/official/parts/" + Util.urlEncoded(ctx.FILENAME().getText());
+			String accessURL = "http://www.ldraw.org/cgi-bin/ptdetail.cgi?f=parts/" + Util.urlEncoded(ctx.FILENAME().getText());
+
 			distributionModel.add( distribution, RDF.type, ADMS.AssetDistribution ) ;
 			distributionModel.add( distribution, DCTerms.format, "application/x-ldraw" );
 			distributionModel.add( distribution, DCAT.mediaType, "application/x-ldraw" );

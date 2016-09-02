@@ -9,18 +9,14 @@ package de.dfki.resc28.ole.bootstrap.listener;
 
 
 
-import java.util.List;
-
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -42,6 +38,7 @@ import de.dfki.resc28.LDrawParser.LDrawParser.TitleContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
 import de.dfki.resc28.ole.bootstrap.App;
+import de.dfki.resc28.ole.bootstrap.Util;
 import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
@@ -85,11 +82,11 @@ public class AssetListener extends LDrawParserBaseListener
 		assetModel.setNsPrefix("skos", SKOS.getURI());
 		assetModel.setNsPrefix("xsd", XSD.NS);
 		assetModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		assetModel.setNsPrefix("users", App.fBaseURI + "/repo/users/");
-		assetModel.setNsPrefix("assets", App.fBaseURI + "/repo/assets/");
-		assetModel.setNsPrefix("distributions", App.fBaseURI + "/repo/distributions/");
+		assetModel.setNsPrefix("users", Util.joinPath(App.fBaseURI, "repo/users/"));
+		assetModel.setNsPrefix("assets", Util.joinPath(App.fBaseURI, "repo/assets/"));
+		assetModel.setNsPrefix("distributions", Util.joinPath(App.fBaseURI, "repo/distributions/"));
 
-		asset = assetModel.createResource(App.fBaseURI + "/repo/assets/" + basename);
+		asset = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets", Util.urlEncoded(basename)));
 		assetModel.add( asset, RDF.type, ADMS.Asset );
 
 		landingPage = assetModel.createResource(asset.getURI() + ".html" );
@@ -118,9 +115,9 @@ public class AssetListener extends LDrawParserBaseListener
 	public void exitTitle(TitleContext ctx)
 	{
 		if (ctx.free_text() != null )
-			assetModel.add( asset, DCTerms.description, toStringLiteral(ctx.free_text(), " ") );
+			assetModel.add( asset, DCTerms.description, Util.toStringLiteral(ctx.free_text(), " ") );
 	}
-	
+
 	@Override
 	public void exitAuthor_row(Author_rowContext ctx)
 	{
@@ -128,9 +125,9 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = assetModel.createResource(App.fBaseURI + "/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource creator = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/users/") + Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_"));
 				assetModel.add( creator, RDF.type, FOAF.Agent );
-				assetModel.add( creator, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
+				assetModel.add( creator, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
 				assetModel.add( creator, FOAF.made, asset);
 
 				assetModel.add( asset, FOAF.maker, creator );
@@ -158,9 +155,9 @@ public class AssetListener extends LDrawParserBaseListener
 
 	@Override
 	public void exitComment_row(Comment_rowContext ctx)
-	{	
+	{
 		if (ctx.free_text() != null)
-			assetModel.add( asset, RDFS.comment, toStringLiteral(ctx.free_text(), " ") );
+			assetModel.add( asset, RDFS.comment, Util.toStringLiteral(ctx.free_text(), " ") );
 	}
 
 	@Override
@@ -170,13 +167,13 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			Resource changeNote = assetModel.createResource();
 			assetModel.add( changeNote, DCTerms.date, assetModel.createTypedLiteral(ctx.YYYY_MM_DD().getText(), XSDDatatype.XSDdate));
-			assetModel.add( changeNote, RDF.value, toStringLiteral(ctx.free_text(), " ") );
-			
+			assetModel.add( changeNote, RDF.value, Util.toStringLiteral(ctx.free_text(), " ") );
+
 			if (ctx.realname() != null)
 			{
-				Resource contributor = assetModel.createResource(App.fBaseURI + "/repo/users/" + toStringLiteral(ctx.realname().STRING(), "_"));
+				Resource contributor = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/users/") + Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_"));
 				assetModel.add( contributor, RDF.type, FOAF.Agent );
-				assetModel.add( contributor, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
+				assetModel.add( contributor, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
 				assetModel.add( changeNote,  DCTerms.creator, contributor);
 				assetModel.add( contributor, DCTerms.contributor, asset );
 			}
@@ -190,11 +187,11 @@ public class AssetListener extends LDrawParserBaseListener
 	
 	@Override
 	public void exitKeywords_row(Keywords_rowContext ctx)
-	{	
+	{
 		if (ctx.free_text() != null)
-			assetModel.add( asset, DCAT.keyword, toStringLiteral(ctx.free_text(), " ") );
+			assetModel.add( asset, DCAT.keyword, Util.toStringLiteral(ctx.free_text(), " ") );
 	}
-	
+
 	@Override
 	public void exitLicense_row(License_rowContext ctx)
 	{
@@ -202,17 +199,17 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			Resource rightsStatement = assetModel.createResource();
 			assetModel.add( rightsStatement, RDF.type, DCTerms.RightsStatement );
-			assetModel.add( rightsStatement, RDFS.label, toStringLiteral(ctx.free_text(), " ") );
+			assetModel.add( rightsStatement, RDFS.label, Util.toStringLiteral(ctx.free_text(), " ") );
 			assetModel.add( asset, DCTerms.rights, rightsStatement );
 		}
 	}
-	
+
 	@Override
 	public void exitName_row(Name_rowContext ctx)
 	{			  
 		if (ctx != null)
 		{
-			Resource distribution = assetModel.createResource(App.fBaseURI + "/repo/distributions/" + ctx.FILENAME().getText());
+			Resource distribution = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/distributions/") + Util.urlEncoded(ctx.FILENAME().getText()));
 			assetModel.add( asset, DCAT.distribution, distribution );
 		}
 	}
@@ -222,13 +219,13 @@ public class AssetListener extends LDrawParserBaseListener
 	{
 		if (ctx.subPart() != null)
 		{
-			Resource subPart = assetModel.createResource(App.fBaseURI + "/repo/assets/" + FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText()));
+			Resource subPart = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets/") + Util.urlEncoded(FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText())));
 			assetModel.add( asset, ADMS.includedAsset, subPart );
 		}
 
 		if (ctx.hiResPrimitive() != null)
 		{
-			Resource hisResPrimitive = assetModel.createResource(App.fBaseURI + "/repo/assets/" + FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText()));
+			Resource hisResPrimitive = assetModel.createResource(Util.joinPath(App.fBaseURI, "/repo/assets/") + Util.urlEncoded(FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText())));
 			assetModel.add( asset, ADMS.includedAsset, hisResPrimitive );
 		}
 	}
@@ -237,16 +234,16 @@ public class AssetListener extends LDrawParserBaseListener
 	{
 		if (ctx.free_text() != null)
 		{
-			assetModel.add( asset, SKOS.note, toStringLiteral(ctx.free_text(), " ") );
+			assetModel.add( asset, SKOS.note, Util.toStringLiteral(ctx.free_text(), " ") );
 		}
 	}
-	
+
 	public void exitLdraw_row(Ldraw_rowContext ctx)
 	{
 		if (ctx != null)
 		{
-			assetModel.add( asset, DCTerms.type, assetModel.createResource("http://www.ldraw.org/ns/ldraw#" + ctx.type().TYPE().getText()));
-			
+			assetModel.add( asset, DCTerms.type, assetModel.createResource("http://www.ldraw.org/ns/ldraw#" + Util.urlEncoded(ctx.type().TYPE().getText())));
+
 		}
 	}
 
@@ -269,28 +266,5 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			return "Something went wrong!";
 		}
-	}
-
-	private Literal toStringLiteral(RuleContext ctx, String separator) 
-	{
-		if (ctx != null)
-		{
-			String descr[] = new String[ctx.getPayload().getChildCount()];
-			for (int i = 0; i<ctx.getPayload().getChildCount(); i++)
-				descr[i] = ctx.getPayload().getChild(i).getText();
-	
-			return ResourceFactory.createTypedLiteral(StringUtils.join(descr, separator), XSDDatatype.XSDstring);
-		}
-		else
-		{
-			return ResourceFactory.createPlainLiteral("Something went wrong!");
-		}
-	}
-
-
-	
-	private Literal toStringLiteral(List<TerminalNode> tokens, String separator)
-	{
-		return ResourceFactory.createTypedLiteral(StringUtils.join(tokens.toArray(), separator), XSDDatatype.XSDstring);
 	}
 }
