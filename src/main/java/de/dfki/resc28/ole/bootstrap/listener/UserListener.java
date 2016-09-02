@@ -6,15 +6,11 @@
 
 package de.dfki.resc28.ole.bootstrap.listener;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -31,6 +27,7 @@ import de.dfki.resc28.LDrawParser.LDrawParser.History_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
 import de.dfki.resc28.ole.bootstrap.App;
+import de.dfki.resc28.ole.bootstrap.Util;
 import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
@@ -40,7 +37,7 @@ public class UserListener extends LDrawParserBaseListener
 	private Resource asset;
 	private Model userModel;
 	private Resource user;
-	private String userBaseUri = App.fBaseURI + "/repo/users/" ;
+	private String userBaseUri = Util.joinPath(App.fBaseURI, "repo/users/");
 
 	private String basename;
 	private String extension;
@@ -68,11 +65,11 @@ public class UserListener extends LDrawParserBaseListener
 		userModel.setNsPrefix("skos", SKOS.getURI());
 		userModel.setNsPrefix("xsd", XSD.NS);
 		userModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		userModel.setNsPrefix("users", App.fBaseURI + "/repo/users/");
-		userModel.setNsPrefix("assets", App.fBaseURI + "/repo/assets/");
-		userModel.setNsPrefix("distributions", App.fBaseURI + "/repo/distributions/");
+		userModel.setNsPrefix("users", Util.joinPath(App.fBaseURI, "repo/users/"));
+		userModel.setNsPrefix("assets", Util.joinPath(App.fBaseURI, "repo/assets/"));
+		userModel.setNsPrefix("distributions", Util.joinPath(App.fBaseURI, "repo/distributions/"));
 
-		asset = userModel.createResource(App.fBaseURI + "/repo/assets/" + basename);
+		asset = userModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets", Util.urlEncoded(basename)));
 	};
 
 	@Override
@@ -105,16 +102,16 @@ public class UserListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource user = ResourceFactory.createResource(userBaseUri + toStringLiteral(ctx.realname().STRING(), "_"));
-				
+				Resource user = ResourceFactory.createResource(Util.joinPath(userBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
+
 				// only add user if not known yet!
 				if (!graphStore.containsNamedGraph(user.getURI()))
 				{
 
-					userModel.add( user, RDF.type, FOAF.Agent );		
-					userModel.add( user, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
-					userModel.add( user, FOAF.made, asset);				
-					
+					userModel.add( user, RDF.type, FOAF.Agent );
+					userModel.add( user, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
+					userModel.add( user, FOAF.made, asset);
+
 					if (ctx.username() != null)
 					{
 						Resource account = userModel.createResource();
@@ -136,17 +133,17 @@ public class UserListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = ResourceFactory.createResource(userBaseUri + toStringLiteral(ctx.realname().STRING(), "_"));
-				
+				Resource creator = ResourceFactory.createResource(Util.joinPath(userBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
+
 				// only add user if not known yet!
 				if (!graphStore.containsNamedGraph(creator.getURI()))
 				{
 
 					userModel.add( creator, RDF.type, FOAF.Agent );
-					userModel.add( creator, FOAF.name, toStringLiteral(ctx.realname().STRING(), " ") );
+					userModel.add( creator, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
 				}
 			}
-			
+
 			if (ctx.username() != null)
 			{
 				// TODO: // check if we know a user with ctx.username() else create this user
@@ -176,26 +173,4 @@ public class UserListener extends LDrawParserBaseListener
 		}
 	}
 
-	private Literal toStringLiteral(RuleContext ctx, String separator) 
-	{
-		if (ctx != null)
-		{
-			String descr[] = new String[ctx.getPayload().getChildCount()];
-			for (int i = 0; i<ctx.getPayload().getChildCount(); i++)
-				descr[i] = ctx.getPayload().getChild(i).getText();
-	
-			return ResourceFactory.createTypedLiteral(StringUtils.join(descr, separator), XSDDatatype.XSDstring);
-		}
-		else
-		{
-			return ResourceFactory.createPlainLiteral("Something went wrong!");
-		}
-	}
-
-
-	
-	private Literal toStringLiteral(List<TerminalNode> tokens, String separator)
-	{
-		return ResourceFactory.createTypedLiteral(StringUtils.join(tokens.toArray(), separator), XSDDatatype.XSDstring);
-	}
 }
