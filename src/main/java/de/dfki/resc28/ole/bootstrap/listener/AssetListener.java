@@ -9,11 +9,10 @@ package de.dfki.resc28.ole.bootstrap.listener;
 
 
 
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -32,7 +31,6 @@ import de.dfki.resc28.LDrawParser.LDrawParser.History_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.Keywords_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.Ldraw_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.License_rowContext;
-import de.dfki.resc28.LDrawParser.LDrawParser.Name_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.Reference_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.TitleContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
@@ -50,28 +48,28 @@ public class AssetListener extends LDrawParserBaseListener
 { 	
 	private Model assetModel;
 	private Resource asset;
-	private Resource landingPage;
+	private Resource distribution;
 	
+	private String fileName;
 	private String basename;
-	private String extension;
-	private IGraphStore graphStore;
 	
+	private IGraphStore graphStore;
 	
 	
 	public AssetListener(String fileName, IGraphStore graphStore)
 	{
 		super();
 		
+		this.fileName  = fileName;
 		this.basename = FilenameUtils.getBaseName(fileName);
-		this.extension = FilenameUtils.getExtension(fileName);
 		this.graphStore = graphStore;
 	}
 
 
-	
 	@Override
 	public void enterFile(FileContext ctx) 
 	{
+		// set NS prefixes
 		assetModel = ModelFactory.createDefaultModel();
 		assetModel.setNsPrefixes(FOAF.NAMESPACE);
 		assetModel.setNsPrefixes(ADMS.NAMESPACE);
@@ -82,16 +80,30 @@ public class AssetListener extends LDrawParserBaseListener
 		assetModel.setNsPrefix("skos", SKOS.getURI());
 		assetModel.setNsPrefix("xsd", XSD.NS);
 		assetModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		assetModel.setNsPrefix("users", Util.joinPath(App.fBaseURI, "repo/users/"));
-		assetModel.setNsPrefix("assets", Util.joinPath(App.fBaseURI, "repo/assets/"));
-		assetModel.setNsPrefix("distributions", Util.joinPath(App.fBaseURI, "repo/distributions/"));
+		assetModel.setNsPrefix("users", App.fUserBaseUri);
+		assetModel.setNsPrefix("assets", App.fAssetBaseUri);
+		assetModel.setNsPrefix("distributions", App.fDistributionBaseUri);
 
-		asset = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets", Util.urlEncoded(basename)));
+		// create asset resource
+		asset = assetModel.createResource(Util.joinPath(App.fAssetBaseUri, Util.urlEncoded(basename)));
 		assetModel.add( asset, RDF.type, ADMS.Asset );
 
-		landingPage = assetModel.createResource(asset.getURI() + ".html" );
-		assetModel.add(landingPage, RDF.type, FOAF.Document);
-		assetModel.add( asset, DCAT.landingPage, landingPage);
+//		landingPage = assetModel.createResource(asset.getURI() + ".html" );
+//		assetModel.add(landingPage, RDF.type, FOAF.Document);
+//		assetModel.add( asset, DCAT.landingPage, landingPage);
+		
+		// create and add distribution resource 
+		distribution = assetModel.createResource(Util.joinPath(App.fDistributionBaseUri, Util.urlEncoded(basename)));
+		assetModel.add( distribution, RDF.type, ADMS.AssetDistribution );
+		assetModel.add( distribution, DCTerms.format, "application/x-ldraw" );
+		assetModel.add( distribution, DCAT.mediaType, "application/x-ldraw" );
+		Literal downloadURL = assetModel.createTypedLiteral( Util.joinPath(App.fStorageURI, Util.urlEncoded(fileName)), XSDDatatype.XSDanyURI );
+		assetModel.add( distribution, DCAT.downloadURL, downloadURL);
+		assetModel.add( asset, DCAT.distribution, distribution );
+		
+		Resource repo = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo"));
+		assetModel.add( repo, RDF.type, ADMS.AssetRepository);
+		assetModel.add( asset, DCTerms.isReferencedBy, repo );
 	};
 	
 	@Override
@@ -125,22 +137,24 @@ public class AssetListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/users/") + Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_"));
-				assetModel.add( creator, RDF.type, FOAF.Agent );
-				assetModel.add( creator, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
-				assetModel.add( creator, FOAF.made, asset);
-
+				Resource creator = assetModel.createResource(Util.joinPath(App.fUserBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").getString()));
 				assetModel.add( asset, FOAF.maker, creator );
 				assetModel.add( asset,  DCTerms.creator, creator );
-
-				if (ctx.username() != null)
-				{
-					Resource account = assetModel.createResource();
-					assetModel.add( account, RDF.type, FOAF.OnlineAccount );
-					assetModel.add( account, FOAF.accountServiceHomepage, assetModel.createTypedLiteral("http://ldraw.org/", XSDDatatype.XSDanyURI) );
-					assetModel.add( account, FOAF.accountName, ctx.username().STRING().getText() );
-					assetModel.add( creator, FOAF.account, account );
-				}
+				
+//				assetModel.add( creator, RDF.type, FOAF.Agent );
+//				assetModel.add( creator, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
+//				assetModel.add( creator, FOAF.made, asset);
+//
+//				
+//
+//				if (ctx.username() != null)
+//				{
+//					Resource account = assetModel.createResource();
+//					assetModel.add( account, RDF.type, FOAF.OnlineAccount );
+//					assetModel.add( account, FOAF.accountServiceHomepage, assetModel.createTypedLiteral("http://ldraw.org/", XSDDatatype.XSDanyURI) );
+//					assetModel.add( account, FOAF.accountName, ctx.username().STRING().getText() );
+//					assetModel.add( creator, FOAF.account, account );
+//				}
 			}
 		}
 	}
@@ -168,20 +182,20 @@ public class AssetListener extends LDrawParserBaseListener
 			Resource changeNote = assetModel.createResource();
 			assetModel.add( changeNote, DCTerms.date, assetModel.createTypedLiteral(ctx.YYYY_MM_DD().getText(), XSDDatatype.XSDdate));
 			assetModel.add( changeNote, RDF.value, Util.toStringLiteral(ctx.free_text(), " ") );
-
-			if (ctx.realname() != null)
-			{
-				Resource contributor = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/users/") + Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_"));
-				assetModel.add( contributor, RDF.type, FOAF.Agent );
-				assetModel.add( contributor, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
-				assetModel.add( changeNote,  DCTerms.creator, contributor);
-				assetModel.add( contributor, DCTerms.contributor, asset );
-			}
-
 			assetModel.add( asset, SKOS.changeNote, changeNote );
 			
-			// TODO: ctx.username()
+			if (ctx.realname() != null)
+			{
+				Resource contributor = assetModel.createResource(Util.joinPath(App.fUserBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
+				assetModel.add( changeNote,  DCTerms.creator, contributor);
+				assetModel.add( contributor, DCTerms.contributor, asset );
+				
+//				assetModel.add( contributor, RDF.type, FOAF.Agent );
+//				assetModel.add( contributor, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
 
+			}
+
+			// TODO: ctx.username()
 		}
 	}
 	
@@ -204,28 +218,32 @@ public class AssetListener extends LDrawParserBaseListener
 		}
 	}
 
-	@Override
-	public void exitName_row(Name_rowContext ctx)
-	{			  
-		if (ctx != null)
-		{
-			Resource distribution = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/distributions/") + Util.urlEncoded(ctx.FILENAME().getText()));
-			assetModel.add( asset, DCAT.distribution, distribution );
-		}
-	}
+//	@Override
+//	public void exitName_row(Name_rowContext ctx)
+//	{			  
+//		if (ctx != null)
+//		{
+//			Resource distribution = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/distributions/") + Util.urlEncoded(ctx.FILENAME().getText()));
+//			assetModel.add( asset, DCAT.distribution, distribution );
+//		}
+//	}
 
 	@Override
 	public void exitReference_row(Reference_rowContext ctx)
 	{
 		if (ctx.subPart() != null)
 		{
-			Resource subPart = assetModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets/") + Util.urlEncoded(FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText())));
+			Resource subPart = assetModel.createResource(Util.joinPath(App.fAssetBaseUri, Util.urlEncoded(FilenameUtils.getBaseName(ctx.subPart().FILENAME().getText())).toString()));
 			assetModel.add( asset, ADMS.includedAsset, subPart );
 		}
-
+		if (ctx.subFile() != null)
+		{
+			Resource subFile = assetModel.createResource(Util.joinPath(App.fAssetBaseUri, Util.urlEncoded(FilenameUtils.getBaseName(ctx.subFile().FILENAME().getText())).toString()));
+			assetModel.add( asset, ADMS.includedAsset, subFile );
+		}
 		if (ctx.hiResPrimitive() != null)
 		{
-			Resource hisResPrimitive = assetModel.createResource(Util.joinPath(App.fBaseURI, "/repo/assets/") + Util.urlEncoded(FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText())));
+			Resource hisResPrimitive = assetModel.createResource(Util.joinPath(App.fAssetBaseUri, Util.urlEncoded(FilenameUtils.getBaseName(ctx.hiResPrimitive().FILENAME().getText())).toString()));
 			assetModel.add( asset, ADMS.includedAsset, hisResPrimitive );
 		}
 	}
@@ -243,28 +261,18 @@ public class AssetListener extends LDrawParserBaseListener
 		if (ctx != null)
 		{
 			assetModel.add( asset, DCTerms.type, assetModel.createResource("http://www.ldraw.org/ns/ldraw#" + Util.urlEncoded(ctx.type().TYPE().getText())));
-
-		}
-	}
-
-	
-	
-	
-	
-	
-	private String toPlainString(RuleContext ctx, String separator) 
-	{
-		if (ctx != null)
-		{
-			String descr[] = new String[ctx.getPayload().getChildCount()];
-			for (int i = 0; i<ctx.getPayload().getChildCount(); i++)
-				descr[i] = ctx.getPayload().getChild(i).getText();
-	
-			return StringUtils.join(descr, separator);
-		}
-		else
-		{
-			return "Something went wrong!";
+//			String downloadURL ;
+//			
+//			if (ctx.type().TYPE().getText().contains("Unofficial_Part") | ctx.type().TYPE().getText().contains("Unofficial_Subpart") | ctx.type().TYPE().getText().contains("Unofficial_Sub-part"))
+//			{
+//				downloadURL = Util.appendSegmentToPath("http://www.ldraw.org/library/unofficial/parts/", Util.urlEncoded(basename));
+//				assetModel.add( distribution, DCAT.downloadURL, assetModel.createTypedLiteral(downloadURL, XSDDatatype.XSDanyURI));
+//			}
+//			else if (ctx.type().TYPE().getText().contains("Part") | ctx.type().TYPE().getText().contains("Subpart") | ctx.type().TYPE().getText().contains("Sub-part"))
+//			{
+//				downloadURL = Util.appendSegmentToPath("http://www.ldraw.org/library/unofficial/parts/", Util.urlEncoded(basename));
+//				assetModel.add( distribution, DCAT.downloadURL, assetModel.createTypedLiteral(downloadURL, XSDDatatype.XSDanyURI));
+//			}
 		}
 	}
 }

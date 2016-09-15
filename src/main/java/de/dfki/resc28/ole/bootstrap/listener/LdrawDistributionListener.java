@@ -6,17 +6,12 @@
 
 package de.dfki.resc28.ole.bootstrap.listener;
 
-import java.util.List;
-
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -25,7 +20,6 @@ import org.apache.jena.vocabulary.XSD;
 
 import de.dfki.resc28.LDrawParser.LDrawParser.Author_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParser.FileContext;
-import de.dfki.resc28.LDrawParser.LDrawParser.Name_rowContext;
 import de.dfki.resc28.LDrawParser.LDrawParserBaseListener;
 import de.dfki.resc28.igraphstore.IGraphStore;
 import de.dfki.resc28.ole.bootstrap.App;
@@ -40,11 +34,9 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 	private Resource distribution;
 	private Resource asset;
 
-	private String distibutionBaseUri = Util.joinPath(App.fBaseURI, "repo/distributions/") ;
-
 	private String basename;
-	private String extension;
 	private String fileName;
+
 	private IGraphStore graphStore;
 	
 	
@@ -54,7 +46,6 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		super();
 		
 		this.basename = FilenameUtils.getBaseName(fileName);
-		this.extension = FilenameUtils.getExtension(fileName);
 		this.graphStore = graphStore;
 		this.fileName = fileName;
 	}
@@ -72,13 +63,19 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		distributionModel.setNsPrefix("skos", SKOS.getURI());
 		distributionModel.setNsPrefix("xsd", XSD.NS);
 		distributionModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		distributionModel.setNsPrefix("users", Util.joinPath(App.fBaseURI, "repo/users/"));
-		distributionModel.setNsPrefix("assets", Util.joinPath(App.fBaseURI, "repo/assets/"));
-		distributionModel.setNsPrefix("distributions", Util.joinPath(App.fBaseURI, "repo/distributions/"));
+		distributionModel.setNsPrefix("users", App.fUserBaseUri);
+		distributionModel.setNsPrefix("assets", App.fAssetBaseUri);
+		distributionModel.setNsPrefix("distributions", App.fDistributionBaseUri);
 
-		asset = distributionModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets/") + Util.urlEncoded(basename));
-
-		distribution = distributionModel.createResource(Util.joinPath(distibutionBaseUri, Util.urlEncoded(fileName)));
+		asset = distributionModel.createResource(Util.joinPath(App.fAssetBaseUri, Util.urlEncoded(basename)));
+		distributionModel.add( asset, RDF.type, ADMS.Asset);
+		distribution = distributionModel.createResource(Util.joinPath(App.fDistributionBaseUri, Util.urlEncoded(basename)));
+		distributionModel.add( distribution, RDF.type, ADMS.AssetDistribution );
+		distributionModel.add( distribution, DCTerms.format, "application/x-ldraw" );
+		distributionModel.add( distribution, DCAT.mediaType, "application/x-ldraw" );
+		distributionModel.add( distribution, DCTerms.isReferencedBy, asset );
+		Literal downloadURL = distributionModel.createTypedLiteral( Util.joinPath(App.fStorageURI, Util.urlEncoded(fileName)), XSDDatatype.XSDanyURI );
+		distributionModel.add( distribution, DCAT.downloadURL, downloadURL);
 	};
 
 	@Override
@@ -108,40 +105,44 @@ public class LdrawDistributionListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource creator = distributionModel.createResource(Util.joinPath(App.fBaseURI, "repo/users/") + Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_"));
+				Resource creator = distributionModel.createResource(Util.joinPath(App.fUserBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
 				distributionModel.add( distribution, FOAF.maker, creator );
 				distributionModel.add( distribution,  DCTerms.creator, creator );
 			}
 		}
 	}
 	
-	@Override
-	public void exitName_row(Name_rowContext ctx)
-	{			  
-		if (ctx != null)
-		{
-			String downloadURL = "http://www.ldraw.org/library/official/parts/" + Util.urlEncoded(ctx.FILENAME().getText());
-			String accessURL = "http://www.ldraw.org/cgi-bin/ptdetail.cgi?f=parts/" + Util.urlEncoded(ctx.FILENAME().getText());
-
-			distributionModel.add( distribution, RDF.type, ADMS.AssetDistribution ) ;
-			distributionModel.add( distribution, DCTerms.format, "application/x-ldraw" );
-			distributionModel.add( distribution, DCAT.mediaType, "application/x-ldraw" );
-			distributionModel.add( distribution, DCAT.downloadURL, distributionModel.createTypedLiteral(downloadURL, XSDDatatype.XSDanyURI)); 
-			distributionModel.add( distribution, DCAT.accessURL, distributionModel.createTypedLiteral(accessURL, XSDDatatype.XSDanyURI));
-		}
-	}
+//	@Override
+//	public void exitName_row(Name_rowContext ctx)
+//	{			  
+//		if (ctx != null)
+//		{
+//			distributionModel.add( distribution, RDF.type, ADMS.AssetDistribution ) ;
+//			distributionModel.add( distribution, DCTerms.format, "application/x-ldraw" );
+//			distributionModel.add( distribution, DCAT.mediaType, "application/x-ldraw" );
+//		}
+//	}
 	
-
-
-
-
-
-	
-	private Literal toStringLiteral(List<TerminalNode> tokens, String separator)
-	{
-		return ResourceFactory.createTypedLiteral(StringUtils.join(tokens.toArray(), separator), XSDDatatype.XSDstring);
-	}
-
-
-
+//	@Override 
+//	public void exitLdraw_row(Ldraw_rowContext ctx)
+//	{
+//		if (ctx != null)
+//		{
+//			String downloadURL ;
+//			String accessURL = Util.appendSegmentToPath("http://www.ldraw.org/cgi-bin/ptdetail.cgi?f=parts/", Util.urlEncoded(fileName));
+//			
+//			if (ctx.type().TYPE().getText().contains("Unofficial_Part") | ctx.type().TYPE().getText().contains("Unofficial_Subpart") | ctx.type().TYPE().getText().contains("Unofficial_Sub-part"))
+//			{
+//				downloadURL = Util.appendSegmentToPath("http://www.ldraw.org/library/unofficial/parts/", Util.urlEncoded(basename));
+//				distributionModel.add( distribution, DCAT.downloadURL, distributionModel.createTypedLiteral(downloadURL, XSDDatatype.XSDanyURI));
+//				distributionModel.add( distribution, DCAT.accessURL, distributionModel.createTypedLiteral(accessURL, XSDDatatype.XSDanyURI));
+//			}
+//			else if (ctx.type().TYPE().getText().contains("Part") | ctx.type().TYPE().getText().contains("Subpart") | ctx.type().TYPE().getText().contains("Sub-part"))
+//			{
+//				downloadURL = Util.appendSegmentToPath("http://www.ldraw.org/library/unofficial/parts/", Util.urlEncoded(basename));
+//				distributionModel.add( distribution, DCAT.downloadURL, distributionModel.createTypedLiteral(downloadURL, XSDDatatype.XSDanyURI));
+//				distributionModel.add( distribution, DCAT.accessURL, distributionModel.createTypedLiteral(accessURL, XSDDatatype.XSDanyURI));
+//			}
+//		}
+//	}
 }

@@ -32,23 +32,24 @@ import de.dfki.resc28.ole.bootstrap.vocabularies.ADMS;
 import de.dfki.resc28.ole.bootstrap.vocabularies.DCAT;
 import de.dfki.resc28.ole.bootstrap.vocabularies.FOAF;
 
+// FIXME: this is broken!
 public class UserListener extends LDrawParserBaseListener
 {
-	private Resource asset;
 	private Model userModel;
+	private Resource asset;
 	private Resource user;
-	private String userBaseUri = Util.joinPath(App.fBaseURI, "repo/users/");
 
+	private String fileName;
 	private String basename;
-	private String extension;
+
 	private IGraphStore graphStore;
 
 	public UserListener(String fileName, IGraphStore graphStore)
 	{
 		super();
 		
+		this.fileName  = fileName;
 		this.basename = FilenameUtils.getBaseName(fileName);
-		this.extension = FilenameUtils.getExtension(fileName);
 		this.graphStore = graphStore;
 	}
 	
@@ -65,11 +66,12 @@ public class UserListener extends LDrawParserBaseListener
 		userModel.setNsPrefix("skos", SKOS.getURI());
 		userModel.setNsPrefix("xsd", XSD.NS);
 		userModel.setNsPrefix("ldraw", "http://www.ldraw.org/ns/ldraw#");
-		userModel.setNsPrefix("users", Util.joinPath(App.fBaseURI, "repo/users/"));
-		userModel.setNsPrefix("assets", Util.joinPath(App.fBaseURI, "repo/assets/"));
-		userModel.setNsPrefix("distributions", Util.joinPath(App.fBaseURI, "repo/distributions/"));
+		userModel.setNsPrefix("users", App.fUserBaseUri);
+		userModel.setNsPrefix("assets", App.fAssetBaseUri);
+		userModel.setNsPrefix("distributions", App.fDistributionBaseUri);
 
-		asset = userModel.createResource(Util.joinPath(App.fBaseURI, "repo/assets", Util.urlEncoded(basename)));
+		asset = userModel.createResource(Util.joinPath(App.fAssetBaseUri, Util.urlEncoded(basename)));
+
 	};
 
 	@Override
@@ -102,15 +104,16 @@ public class UserListener extends LDrawParserBaseListener
 		{
 			if (ctx.realname() != null)
 			{
-				Resource user = ResourceFactory.createResource(Util.joinPath(userBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
-
+				Resource creator = ResourceFactory.createResource(Util.joinPath(App.fUserBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
+				
+				
+				userModel.add( user, FOAF.made, asset);
+				
 				// only add user if not known yet!
 				if (!graphStore.containsNamedGraph(user.getURI()))
 				{
-
 					userModel.add( user, RDF.type, FOAF.Agent );
 					userModel.add( user, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
-					userModel.add( user, FOAF.made, asset);
 
 					if (ctx.username() != null)
 					{
@@ -126,51 +129,31 @@ public class UserListener extends LDrawParserBaseListener
 	}
 
 	
-	@Override
-	public void exitHistory_row(History_rowContext ctx)
-	{
-		if (ctx != null)
-		{
-			if (ctx.realname() != null)
-			{
-				Resource creator = ResourceFactory.createResource(Util.joinPath(userBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
-
-				// only add user if not known yet!
-				if (!graphStore.containsNamedGraph(creator.getURI()))
-				{
-
-					userModel.add( creator, RDF.type, FOAF.Agent );
-					userModel.add( creator, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
-				}
-			}
-
-			if (ctx.username() != null)
-			{
-				// TODO: // check if we know a user with ctx.username() else create this user
-			}
-		}
-	}
-	
-	
-	
-	
-	
-	
-	
-	private String toPlainString(RuleContext ctx, String separator) 
-	{
-		if (ctx != null)
-		{
-			String descr[] = new String[ctx.getPayload().getChildCount()];
-			for (int i = 0; i<ctx.getPayload().getChildCount(); i++)
-				descr[i] = ctx.getPayload().getChild(i).getText();
-	
-			return StringUtils.join(descr, separator);
-		}
-		else
-		{
-			return "Something went wrong!";
-		}
-	}
-
+//	@Override
+//	public void exitHistory_row(History_rowContext ctx)
+//	{
+//		if (ctx != null)
+//		{
+//			if (ctx.realname() != null)
+//			{
+//				Resource contributor = ResourceFactory.createResource(Util.joinPath(App.fUserBaseUri, Util.toURLEncodedStringLiteral(ctx.realname().STRING(), "_").toString()));
+//				userModel.add( contributor, DCTerms.contributor, asset );
+//				
+//				// only add user if not known yet!
+//				if (!graphStore.containsNamedGraph(contributor.getURI()))
+//				{
+//					userModel.add( user, RDF.type, FOAF.Agent );
+//					userModel.add( user, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
+//					
+//					userModel.add( creator, RDF.type, FOAF.Agent );
+//					userModel.add( creator, FOAF.name, Util.toStringLiteral(ctx.realname().STRING(), " ") );
+//				}
+//			}
+//
+//			if (ctx.username() != null)
+//			{
+//				// TODO: // check if we know a user with ctx.username() else create this user
+//			}
+//		}
+//	}
 }

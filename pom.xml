@@ -18,7 +18,8 @@
     	<dataEndpoint>http://localhost:3030/ole/data</dataEndpoint>
     	<queryEndpoint>http://localhost:3030/ole/sparql</queryEndpoint>
         <baseURI>http://localhost:8080/</baseURI>
-        <partsDirectory>/Users/resc01/Desktop/ldraw/ldraw/parts</partsDirectory>
+        <storageURI>http://cluster-frontend/storage/ldraw/</storageURI>
+        <partsDirectory>/Users/resc01/Desktop/20160914_allParts</partsDirectory>
 	</properties>
 
 	<build>

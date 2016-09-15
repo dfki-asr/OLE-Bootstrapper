@@ -5,7 +5,7 @@ Installation & Usage
 -
 Simply run the OLE-Bootstrapper after proper configuration by
 ```
-mvn clean install exec:java
+mvn clean generate-resources install exec:java
 ```
 
 Dependencies
