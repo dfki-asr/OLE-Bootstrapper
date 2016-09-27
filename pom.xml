@@ -17,7 +17,7 @@
   		<graphStore>fuseki</graphStore>
     	<dataEndpoint>http://localhost:3030/ole/data</dataEndpoint>
     	<queryEndpoint>http://localhost:3030/ole/sparql</queryEndpoint>
-        <baseURI>http://localhost:8080/</baseURI>
+        <baseURI>http://ole-frontend</baseURI>
         <storageURI>http://cluster-frontend/storage/ldraw/</storageURI>
         <partsDirectory>/Users/resc01/Desktop/20160914_allParts</partsDirectory>
 	</properties>

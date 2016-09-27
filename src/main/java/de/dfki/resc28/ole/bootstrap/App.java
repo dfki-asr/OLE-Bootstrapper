@@ -112,9 +112,9 @@ public class App
             fBaseURI = getProperty(p, "baseURI", "bootstrap.baseURI");
             fStorageURI = getProperty(p, "storageURI", "bootstrap.storageURI");
             
-            fAssetBaseUri = Util.joinPath(App.fBaseURI, "repo/assets/") ;
-            fDistributionBaseUri = Util.joinPath(App.fBaseURI, "repo/distributions/") ;
-            fUserBaseUri = Util.joinPath(App.fBaseURI, "repo/users/") ;
+            fAssetBaseUri = Util.joinPath(App.fBaseURI, "repo/assets") ;
+            fDistributionBaseUri = Util.joinPath(App.fBaseURI, "repo/distributions") ;
+            fUserBaseUri = Util.joinPath(App.fBaseURI, "repo/users") ;
             
             fPartsDirectory = getProperty(p, "partsDirectory", "bootstrap.partsDirectory");
 
